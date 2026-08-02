@@ -1,6 +1,8 @@
 {
   "name": "SuperKart Sales Forecasting",
-  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "frontend",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "forwardPorts": [7860, 8501],
   "portsAttributes": {
     "7860": {
@@ -12,10 +14,6 @@
       "onAutoForward": "openBrowser"
     }
   },
-  "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
-  },
-  "postCreateCommand": "pip install -r backend_files/requirements.txt && pip install -r frontend_files/requirements.txt",
   "customizations": {
     "vscode": {
       "extensions": [
