@@ -13,9 +13,12 @@ from flask import Flask, request, jsonify
 # Initialize Flask application
 superkart_api = Flask(__name__)
 
-# Load the serialized model once at startup
+# Load the serialized model safely at startup
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "superkart_model.joblib")
-model = joblib.load(MODEL_PATH)
+if os.path.exists(MODEL_PATH):
+    model = joblib.load(MODEL_PATH)
+else:
+    model = None
 
 # Expected feature columns (must match training order)
 FEATURE_COLS = [
@@ -36,7 +39,10 @@ FEATURE_COLS = [
 @superkart_api.get("/")
 def health():
     """Returns a simple health-check message."""
-    return jsonify({"status": "ok", "message": "SuperKart Forecasting API is running."})
+    status_msg = "SuperKart Forecasting API is running."
+    if model is None:
+        status_msg += " (Warning: superkart_model.joblib not loaded yet)"
+    return jsonify({"status": "ok", "message": status_msg})
 
 
 # Online (single-record) inference endpoint
@@ -47,6 +53,9 @@ def predict():
     Product_Store_Sales_Total.
     """
     try:
+        if model is None:
+            return jsonify({"error": "Model file superkart_model.joblib is missing. Please train and upload the model file."}), 500
+
         data = request.get_json(force=True)
         missing = [col for col in FEATURE_COLS if col not in data]
         if missing:
@@ -66,6 +75,9 @@ def predict_batch():
     Returns a JSON object mapping row-index to predicted sales.
     """
     try:
+        if model is None:
+            return jsonify({"error": "Model file superkart_model.joblib is missing. Please train and upload the model file."}), 500
+
         if "file" not in request.files:
             return jsonify({"error": "No file part in request. Use key='file'."}), 400
         file = request.files["file"]
